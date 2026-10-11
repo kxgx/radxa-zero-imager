@@ -1,0 +1,30 @@
+{
+  "imager": {
+    "name": "Radxa Zero Imager",
+    "devices": ["radxa-zero"]
+  },
+  "os_list": [
+    {
+      "name": "Radxa Zero Arch Linux",
+      "description": "Arch Linux ARM for the Radxa Zero (Amlogic S905Y2) with a vanilla mainline kernel.  Built by radxa-zero-archlinux-builder.",
+      "icon": "",
+      "website": "https://github.com/kxgx/radxa-zero-archlinux-builder",
+      "subitems": [
+        {
+          "name": "Stable (mainline 7.2.9)",
+          "description": "Current stable mainline kernel.  Recommended.",
+          "url": "https://github.com/kxgx/radxa-zero-archlinux-builder/releases/latest/download/radxa-zero-archlinux-stable.img.xz",
+          "extract_size": 4580179968,
+          "image_download_size": 600000000
+        },
+        {
+          "name": "Latest (mainline 7.3-rc6)",
+          "description": "Newest mainline kernel (release candidate).",
+          "url": "https://github.com/kxgx/radxa-zero-archlinux-builder/releases/latest/download/radxa-zero-archlinux-latest.img.xz",
+          "extract_size": 4580179968,
+          "image_download_size": 600000000
+        }
+      ]
+    }
+  ]
+}
