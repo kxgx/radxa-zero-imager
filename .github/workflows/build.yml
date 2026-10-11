@@ -116,7 +116,8 @@ jobs:
 
       - name: Deploy Qt runtime
         shell: bash
-        run: "$QT_ROOT_DIR/bin/windeployqt" build/radxa-zero-imager.exe --release --no-translations
+        run: |
+          "$QT_ROOT_DIR/bin/windeployqt" build/radxa-zero-imager.exe --release --no-translations
 
       - name: Package
         shell: bash
