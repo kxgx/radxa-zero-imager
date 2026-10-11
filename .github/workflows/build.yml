@@ -148,7 +148,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
-            libgl1-mesa-dev qt6-base-dev libqt6svg6-dev qt6-base-dev-tools libgnutls28-dev
+            libgl1-mesa-dev qt6-base-dev libqt6svg6-dev qt6-base-dev-tools libgnutls28-dev libudev-dev
 
       - name: Configure + Build
         run: |
