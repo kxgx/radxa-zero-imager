@@ -95,6 +95,8 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_mingw'
+          tools: 'tools_mingw1310'
+          add-tools-to-path: true
           cache: true
 
       - name: Install Ninja
@@ -103,7 +105,15 @@ jobs:
       - name: Configure + Build
         shell: bash
         run: |
-          MINGW_BIN=$(dirname "$(find "$IQTA_TOOLS" -name g++.exe 2>/dev/null | head -1)")
+          QT_POSIX=$(cygpath -u "$QT_ROOT_DIR")
+          MINGW_BIN=$(dirname "$(find "$QT_POSIX/../.." -name g++.exe 2>/dev/null | grep -v '/mingw64/' | head -1)")
+          echo "Using MinGW: $MINGW_BIN"
+          "$MINGW_BIN/g++" --version | head -1
+          # The bundled MinGW must be 13.x (matches Qt 6.9.2 prebuilts); 14.x has a
+          # different CRT and leaves __imp___argc undefined against libQt6EntryPoint.
+          if ! "$MINGW_BIN/g++" --version | head -1 | grep -qE '13\.'; then
+            echo "ERROR: found g++ is not the Qt-bundled 13.x MinGW; ABI will not match"; exit 1
+          fi
           export PATH="$MINGW_BIN:$PATH"
           cmake -B build -S src -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -121,10 +131,16 @@ jobs:
       - name: Package
         shell: bash
         run: |
+          QT_POSIX=$(cygpath -u "$QT_ROOT_DIR")
+          MINGW_BIN=$(dirname "$(find "$QT_POSIX/../.." -name g++.exe 2>/dev/null | grep -v '/mingw64/' | head -1)")
           mkdir -p dist
-          cp build/radxa-zero-imager.exe dist/ 2>/dev/null || true
-          cp -r build/*.dll dist/ 2>/dev/null || true
+          cp build/radxa-zero-imager.exe build/rpi-imager-callback-relay.exe dist/ 2>/dev/null || true
+          cp build/deploy/*.dll dist/ 2>/dev/null || true
+          cp -r build/deploy/platforms build/deploy/styles build/deploy/imageformats build/deploy/qml dist/ 2>/dev/null || true
           cp -r build/platforms build/styles build/imageformats dist/ 2>/dev/null || true
+          # MinGW runtime DLLs must come from the Qt-bundled MinGW (13.x), not C:/mingw64
+          cp "$MINGW_BIN"/libgcc_s_seh-1.dll "$MINGW_BIN"/libstdc++-6.dll "$MINGW_BIN"/libwinpthread-1.dll dist/ 2>/dev/null || true
+          cp src/../license.txt src/windows/rpi-imager-cli.cmd dist/ 2>/dev/null || true
           cd dist && 7z a -tzip ../radxa-zero-imager-win-x64.zip .
 
       - uses: actions/upload-artifact@v6
