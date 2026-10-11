@@ -2577,6 +2577,26 @@ void ImageWriter::onOsListFetchComplete(const QByteArray &data, const QUrl &url,
     }
 }
 
+// [MODIFIED for radxa-zero-archlinux-builder] Embedded Radxa Zero manifest, used
+// as an offline fallback so the OS list is Radxa Zero only (no Pi catalog).
+void ImageWriter::loadEmbeddedOsList()
+{
+    static const QByteArray kEmbedded = QByteArrayLiteral(R"JSON({
+  "imager": { "name": "Radxa Zero Imager", "devices": ["radxa-zero"] },
+  "os_list": [
+    {
+      "name": "Radxa Zero Arch Linux",
+      "description": "Arch Linux ARM for the Radxa Zero (Amlogic S905Y2), mainline kernel.  Built by radxa-zero-archlinux-builder.",
+      "subitems": [
+        { "name": "Stable (mainline 7.2.9)", "description": "Recommended.", "url": "https://github.com/kxgx/radxa-zero-archlinux-builder/releases/latest/download/radxa-zero-archlinux-stable.img.xz" },
+        { "name": "Latest (mainline 7.3-rc6)", "description": "Newest mainline kernel (RC).", "url": "https://github.com/kxgx/radxa-zero-archlinux-builder/releases/latest/download/radxa-zero-archlinux-latest.img.xz" }
+      ]
+    }
+  ]
+})JSON");
+    onOsListFetchComplete(kEmbedded, osListUrl(), osListUrl());
+}
+
 void ImageWriter::onOsListFetchError(const QString &errorMessage, const QUrl &url)
 {
     // Clean up start time tracking
@@ -2610,6 +2630,11 @@ void ImageWriter::onOsListFetchError(const QString &errorMessage, const QUrl &ur
     }
 
     if (isTopLevelRequest) {
+        // [MODIFIED for radxa-zero-archlinux-builder] Offline fallback: load the
+        // embedded Radxa Zero manifest so the OS list is Radxa Zero only even
+        // without network (no Raspberry Pi catalog).
+        if (_completeOsList.isEmpty())
+            loadEmbeddedOsList();
         if (_completeOsList.isEmpty()) {
             // No data at all - notify UI of offline state
             qWarning() << "Top-level OS list fetch failed:" << errorMessage << ". Operating in offline mode.";

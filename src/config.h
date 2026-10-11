@@ -8,7 +8,10 @@
 
 
 /* Repository URL */
-#define OSLIST_URL                              "https://downloads.raspberrypi.com/os_list_imagingutility_v4.json"
+/* [MODIFIED for radxa-zero-archlinux-builder] The Radxa Zero image manifest
+   (hosted on the builder's repo).  When this fetch fails (offline / not yet
+   hosted) the embedded Radxa Zero manifest is used as a fallback. */
+#define OSLIST_URL                              "https://raw.githubusercontent.com/kxgx/radxa-zero-archlinux-builder/main/os-list.json"
 
 /* Custom repository manifest file extension (without leading dot) */
 #define MANIFEST_EXTENSION                      "rpi-imager-manifest"

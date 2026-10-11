@@ -668,6 +668,9 @@ protected slots:
     void onPreparationStatusUpdate(QString msg);
     void onOsListFetchComplete(const QByteArray &data, const QUrl &url, const QUrl &effectiveUrl);
     void onOsListFetchError(const QString &errorMessage, const QUrl &url);
+    // [MODIFIED for radxa-zero-archlinux-builder] Load the embedded Radxa Zero
+    // manifest as an offline fallback when the online fetch fails.
+    void loadEmbeddedOsList();
     void onNetworkConnectionStats(const QString &statsMetadata, const QUrl &url);
     void onSTPdetected();
     void onCacheVerificationProgress(qint64 bytesProcessed, qint64 totalBytes);
