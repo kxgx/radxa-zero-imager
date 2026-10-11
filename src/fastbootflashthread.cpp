@@ -466,6 +466,17 @@ bool FastbootFlashThread::applyCustomisation(fastboot::FastbootProtocol& fb,
         }
     }
 
+    // ── config.txt (radxa format) ──
+    // [MODIFIED for radxa-zero-archlinux-builder] config.txt is the unified boot
+    // config; boot-config-apply reads it on first boot.  No cmdline entry needed.
+    if (!_firstrun.isEmpty() && _initFormat == "radxa") {
+        if (!fb.writeDeviceFile(transport, BOOT + "config.txt", toSpan(_firstrun), _cancelled)) {
+            emit error(tr("Failed to write config.txt: %1")
+                       .arg(QString::fromStdString(fb.lastError())));
+            return false;
+        }
+    }
+
     // ── cloud-init files ──
     // Only write meta-data and the ds=nocloud cmdline when there is actual
     // cloud-init content.  A stale cmdline entry (e.g. recommendedWifiCountry)

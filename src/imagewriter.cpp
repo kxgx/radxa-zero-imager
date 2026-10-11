@@ -4247,36 +4247,23 @@ void ImageWriter::applyCustomisationFromSettings(const QVariantMap &settings)
 
 void ImageWriter::_applySystemdCustomisationFromSettings(const QVariantMap &s)
 {
-    // Use CustomisationGenerator for script generation
-    QByteArray script = rpi_imager::CustomisationGenerator::generateSystemdScript(s, _piConnectToken);
+    // [MODIFIED for radxa-zero-archlinux-builder] Generate the unified Radxa
+    // config.txt (consumed by the image's boot-config-apply first-boot hook)
+    // instead of a Raspberry Pi firstrun.sh.  It travels in the firstrun slot
+    // with initFormat "radxa"; the write step drops it on the boot partition as
+    // config.txt.  Secrets are hashed/derived inside the generator.
+    QByteArray configTxt = rpi_imager::CustomisationGenerator::generateRadxaConfigTxt(s);
 
-    QByteArray cmdlineAppend;
     ImageOptions::AdvancedOptions advOpts = NoAdvancedOptions;
-
-    if (!script.isEmpty()) {
-        const QString wifiCountry = s.value("recommendedWifiCountry").toString().trimmed();
-        if (!wifiCountry.isEmpty()) {
-            // Held to a country code: this lands on the kernel command
-            // line, where a space starts another parameter.
-            const QString regdom =
-                rpi_imager::CustomisationGenerator::sanitisedCountryCode(wifiCountry);
-            if (!regdom.isEmpty())
-                cmdlineAppend = QByteArray(" ") + QByteArray("cfg80211.ieee80211_regdom=")
-                                + regdom.toUtf8();
-        }
-
-        // Check if secure boot should be enabled
-        // Note: Don't validate rsaKeyPath with QFile::exists() here - it can be slow on
-        // iCloud-synced or network paths. The actual write operation will validate the file.
-        bool secureBootEnabled = s.value("secureBootEnabled").toBool();
-        QString rsaKeyPath = _settings.value("secureboot_rsa_key").toString();
-        if (secureBootEnabled && !rsaKeyPath.isEmpty()) {
-            advOpts |= ImageOptions::EnableSecureBoot;
-            qDebug() << "Secure boot enabled with RSA key:" << rsaKeyPath;
-        }
+    bool secureBootEnabled = s.value("secureBootEnabled").toBool();
+    QString rsaKeyPath = _settings.value("secureboot_rsa_key").toString();
+    if (secureBootEnabled && !rsaKeyPath.isEmpty()) {
+        advOpts |= ImageOptions::EnableSecureBoot;
+        qDebug() << "Secure boot enabled with RSA key:" << rsaKeyPath;
     }
 
-    setImageCustomisation(QByteArray(), cmdlineAppend, script, QByteArray(), QByteArray(), advOpts);
+    setImageCustomisation(QByteArray(), QByteArray(), configTxt, QByteArray(), QByteArray(),
+                          advOpts, QByteArrayLiteral("radxa"));
 }
 
 void ImageWriter::_applyCloudInitCustomisationFromSettings(const QVariantMap &s)

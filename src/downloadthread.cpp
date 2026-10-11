@@ -2819,6 +2819,11 @@ bool DownloadThread::_customizeImage()
                 // cmdline entry is required.
                 fat->writeFile("rpi-preseed.toml", _firstrun);
                 _recordCustomisationWrite("rpi-preseed.toml", _firstrun);
+            } else if (_initFormat == "radxa") {
+                // [MODIFIED for radxa-zero-archlinux-builder] config.txt is the
+                // unified boot config; boot-config-apply reads it on first boot.
+                fat->writeFile("config.txt", _firstrun);
+                _recordCustomisationWrite("config.txt", _firstrun);
             }
         }
 
