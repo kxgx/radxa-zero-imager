@@ -22,7 +22,7 @@ WizardStepBase {
     nextButtonAccessibleDescription: qsTr("Save localisation settings and continue to next customisation step")
     backButtonAccessibleDescription: qsTr("Return to previous step")
     skipButtonAccessibleDescription: qsTr("Skip all customisation and proceed directly to writing the image")
-    nextButtonEnabled: comboCapitalCity.currentIndex !== -1
+    nextButtonEnabled: true  // [MODIFIED] capital city hidden; always allow proceeding (timezone/keyboard are optional)
 
     // Initial focus will automatically go to title, then subtitle, then first control (handled by WizardStepBase)
     
@@ -41,6 +41,9 @@ WizardStepBase {
         comboCapitalCity.currentIndex = -1
         comboTimezone.currentIndex = -1
         comboKeyboard.currentIndex = -1
+        // [MODIFIED] default keyboard layout to US
+        var _usIdx = comboKeyboard.find("us")
+        if (_usIdx !== -1) comboKeyboard.currentIndex = _usIdx
 
         // Restore from conserved customization settings only
         var settings = wizardContainer.customizationSettings
