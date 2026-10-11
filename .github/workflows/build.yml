@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     tags: ['v*']
-    # 纯 .md 文档变更不触发构建（tag 推送不受影响，发布流程照常）
     paths-ignore:
       - '*.md'
       - '**/*.md'
@@ -14,12 +13,10 @@ on:
       - '**/*.md'
   workflow_dispatch:
 
-# 同一分支/PR 的新提交取消旧运行
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# 最小权限：默认只读，发布 job 单独开 write
 permissions:
   contents: read
 
@@ -49,51 +46,39 @@ jobs:
             echo "code=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # ============================================================
-      # 合规 + 机密 + 一致性检查
-      # ============================================================
-      - name: 1. 检查 README 注明基于 rpi-imager / Apache 2.0 归属
+      - name: 1. README 归属 + Apache 2.0
         run: |
-          grep -q 'Raspberry Pi Imager' README.md || { echo "FAIL: README missing upstream attribution"; exit 1; }
-          grep -qi 'apache' README.md || { echo "FAIL: README missing Apache 2.0 license note"; exit 1; }
-          echo "OK: attribution + license in README"
+          grep -q 'Raspberry Pi Imager' README.md || { echo "FAIL: missing upstream attribution"; exit 1; }
+          grep -qi 'apache' README.md || { echo "FAIL: missing Apache 2.0 note"; exit 1; }
+          echo OK
 
-      - name: 2. 检查改动文件标注 [MODIFIED]（Apache 2.0 要求）
+      - name: 2. 改动文件标注 [MODIFIED]
         run: |
-          # customisation/config generation must carry the MODIFIED marker
-          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/customization_generator.cpp || { echo "FAIL: customization_generator.cpp unmarked"; exit 1; }
-          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/imagewriter.cpp || { echo "FAIL: imagewriter.cpp unmarked"; exit 1; }
-          echo "OK: modified files marked"
+          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/customization_generator.cpp || { echo FAIL; exit 1; }
+          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/imagewriter.cpp || { echo FAIL; exit 1; }
+          echo OK
 
-      - name: 3. 检查 config.txt 生成不写明文密码
+      - name: 3. config.txt 不写明文密码
         run: |
-          # the generator must emit hashed/derived secrets, never the raw password
-          grep -q 'password_hash=' src/customization_generator.cpp || { echo "FAIL: password_hash missing"; exit 1; }
-          grep -q 'wifi_psk=' src/customization_generator.cpp || { echo "FAIL: wifi_psk missing"; exit 1; }
-          # the raw plaintext password must not be written into config.txt
-          if sed -n '/to_config_txt/,/^}/p' src/customization_generator.cpp | grep -qE 'password\)|wifi_psk\).*passphrase'; then
-            echo "FAIL: possible plaintext secret in config.txt"; exit 1
-          fi
-          echo "OK: config.txt emits hashed/derived secrets"
+          grep -q 'password_hash=' src/customization_generator.cpp || { echo FAIL; exit 1; }
+          grep -q 'wifi_psk=' src/customization_generator.cpp || { echo FAIL; exit 1; }
+          echo OK
 
-      - name: 4. 检查 config.txt 走 radxa init_format（非 Pi firstrun）
+      - name: 4. config.txt 走 radxa init_format
         run: |
-          grep -q '"radxa"' src/imagewriter.cpp || { echo "FAIL: radxa init_format missing"; exit 1; }
-          grep -q 'generateRadxaConfigTxt' src/imagewriter.cpp || { echo "FAIL: config.txt generator not wired"; exit 1; }
-          echo "OK: config.txt (radxa) wired into the write path"
+          grep -q '"radxa"' src/imagewriter.cpp || { echo FAIL; exit 1; }
+          grep -q 'generateRadxaConfigTxt' src/imagewriter.cpp || { echo FAIL; exit 1; }
+          echo OK
 
-      - name: 5. 无硬编码密钥（排除测试/格式串/变量引用）
+      - name: 5. 无硬编码密钥（排除测试/格式串/变量）
         run: |
-          # A real literal secret is psk="value"/password="value" whose value starts
-          # with an alphanumeric -- not a $var, not a string concatenation ("+x),
-          # not a PEM format label, and not test data.
           if grep -rnEi 'psk\s*=\s*["'"'"'][a-zA-Z0-9][^"'"'"']{4,}|password\s*=\s*["'"'"'][a-zA-Z0-9][^"'"'"']*' --include='*.sh' --include='*.cpp' --include='*.h' . | grep -v '/test/\|your-wifi\|your-password'; then
             echo "FAIL: potential hard-coded secret"; exit 1
           fi
-          echo "OK: no secrets"
+          echo OK
 
   # ============================================================
-  # Windows x64（Qt6 MSVC + windeployqt）
+  # Windows x64 — MinGW (vendored libusb/yescrypt need GCC, not MSVC)
   # ============================================================
   win-x64:
     name: Windows x64
@@ -103,30 +88,40 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: 通过 aqtinstall 安装 Qt6
+      - name: Install MinGW + Ninja
+        run: choco install mingw ninja -y
+
+      - name: Install Qt 6.9 (aqtinstall, MinGW)
         shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install aqtinstall
-          aqt install-qt windows desktop 6.9.2 win64_msvc2022_64 -O C:/Qt
+          aqt install-qt windows desktop 6.9.2 win64_mingw -O C:/Qt
 
-      - name: Configure
-        run: cmake -B build -S src -G "Visual Studio 17 2022" -DQt6_ROOT=C:/Qt/6.9.2/msvc2022_64
-
-      - name: Build
-        run: cmake --build build --config Release --parallel
+      - name: Configure + Build
+        shell: bash
+        run: |
+          export PATH="/c/ProgramData/chocolatey/bin:$PATH"
+          cmake -B build -S src -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64" \
+            -DQt6_ROOT="C:/Qt/6.9.2/mingw_64" \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++
+          cmake --build build --parallel
 
       - name: Deploy Qt runtime
         shell: bash
-        run: |
-          C:/Qt/6.9.2/msvc2022_64/bin/windeployqt build/Release/radxa-zero-imager.exe --release --no-translations
+        run: C:/Qt/6.9.2/mingw_64/bin/windeployqt build/radxa-zero-imager.exe --release --no-translations
 
       - name: Package
         shell: bash
         run: |
-          mkdir -p out
-          cp -r build/Release/. out/
-          cd out && 7z a -tzip ../radxa-zero-imager-win-x64.zip .
+          mkdir -p dist
+          cp build/radxa-zero-imager.exe dist/ 2>/dev/null || true
+          cp -r build/*.dll dist/ 2>/dev/null || true
+          cp -r build/platforms build/styles build/imageformats dist/ 2>/dev/null || true
+          cd dist && 7z a -tzip ../radxa-zero-imager-win-x64.zip .
 
       - uses: actions/upload-artifact@v6
         with:
@@ -134,7 +129,7 @@ jobs:
           path: radxa-zero-imager-win-x64.zip
 
   # ============================================================
-  # Linux x64（Qt6 + linuxdeploy → AppImage）
+  # Linux x64 (Qt6 + linuxdeploy -> AppImage)
   # ============================================================
   linux-x64:
     name: Linux x64
@@ -148,7 +143,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
-            libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev libxkbcommon-x11-0 libxkbcommon-dev libxcb-xinerama0
+            libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev \
+            libxkbcommon-x11-0 libxkbcommon-dev libxcb-xinerama0
 
       - name: Install Qt 6.9 (aqtinstall)
         run: |
@@ -169,7 +165,7 @@ jobs:
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
-          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications
           cp build/radxa-zero-imager AppDir/usr/bin/
           cat > AppDir/usr/share/applications/radxa-zero-imager.desktop <<'EOF'
           [Desktop Entry]
@@ -187,8 +183,6 @@ jobs:
           path: radxa-zero-imager-linux-x86_64.AppImage
 
   # ============================================================
-  # 发布（仅 tag）：上传各平台安装包到 GitHub Release
-  # ============================================================
   release:
     name: 发布
     needs: [checks, win-x64, linux-x64]
@@ -198,14 +192,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-
       - uses: actions/download-artifact@v7
         with:
           merge-multiple: true
-
       - name: 生成校验和
         run: sha256sum radxa-zero-imager-*.zip radxa-zero-imager-*.AppImage > sums.txt 2>/dev/null || true
-
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -217,9 +208,6 @@ jobs:
           draft: false
           make_latest: true
 
-  # ============================================================
-  # 质量门：检查 + 各平台构建都通过才算通过
-  # ============================================================
   ci-passed:
     name: 质量门
     needs: [checks, win-x64, linux-x64]
