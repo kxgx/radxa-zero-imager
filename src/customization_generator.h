@@ -87,6 +87,20 @@ public:
                                              const QString& currentUser = QString());
 
     /**
+     * @brief Generate a unified Radxa Zero config.txt from settings
+     *
+     * [MODIFIED for radxa-zero-archlinux-builder] Produces the single
+     * config.txt consumed on first boot by the Radxa image's boot-config-apply
+     * hook (hostname, timezone, ssh, wifi, user).  Secrets are never written in
+     * plaintext: the account password becomes a crypt(3) hash (see
+     * cryptPassword) and the WiFi passphrase a PBKDF2-derived hex PSK.
+     *
+     * @param settings Map containing customisation settings
+     * @return QByteArray containing the generated config.txt
+     */
+    static QByteArray generateRadxaConfigTxt(const QVariantMap& settings);
+
+    /**
      * @brief Escape IEEE 802.11 SSID octets for YAML double-quoted strings
      */
     static QByteArray yamlEscapeSsidOctets(const QByteArray& ssidOctets);
