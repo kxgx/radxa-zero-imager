@@ -95,7 +95,6 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_mingw'
-          tools: 'mingw'
           cache: true
 
       - name: Install Ninja
@@ -104,7 +103,7 @@ jobs:
       - name: Configure + Build
         shell: bash
         run: |
-          MINGW_BIN=$(dirname "$(find "$IQTA_TOOLS" -name g++.exe | head -1)")
+          MINGW_BIN=$(dirname "$(find "$QT_ROOT_DIR/../.." -name g++.exe 2>/dev/null | head -1)")
           export PATH="$MINGW_BIN:$PATH"
           cmake -B build -S src -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -149,7 +148,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
             libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev \
-            libxkbcommon-x11-0 libxkbcommon-dev libxcb-xinerama0 libxcb-cursor0
+            libxkbcommon-x11-0 libxkbcommon-dev libxcb-xinerama0 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xkb1
 
       - name: Install Qt 6.9 (aqtinstall)
         run: |
