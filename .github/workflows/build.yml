@@ -1,67 +1,224 @@
-name: Build Radxa Zero Imager
+name: 跨平台构建与发布
 
 on:
   push:
     branches: [main]
     tags: ['v*']
+    # 纯 .md 文档变更不触发构建（tag 推送不受影响，发布流程照常）
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
   workflow_dispatch:
 
+# 同一分支/PR 的新提交取消旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 最小权限：默认只读，发布 job 单独开 write
+permissions:
+  contents: read
+
 jobs:
-  windows:
-    name: Windows installer
-    runs-on: windows-latest
+
+  checks:
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.codechange.outputs.code }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Qt 6.9 (MinGW) + toolchain
-        uses: jurplel/install-qt-action@v4
+      - uses: actions/checkout@v5
         with:
-          version: '6.9.2'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_mingw'
-          tools: 'mingw'
-          cache: true
+          fetch-depth: 0
 
-      - name: Install Ninja
-        run: choco install ninja -y
+      - name: 0. 检测代码变更（非代码变更时编译矩阵跳过）
+        id: codechange
+        run: |
+          BASE=main
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="${{ github.base_ref }}"; fi
+          git fetch --no-tags origin "$BASE" 2>/dev/null || true
+          if ! git rev-parse --verify "origin/$BASE" >/dev/null 2>&1; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/$BASE...HEAD" -- . \
+            ':(exclude)*.md' ':(exclude)**/*.md' ':(exclude).github/**' > /tmp/changed.txt 2>/dev/null; then
+            if [ -s /tmp/changed.txt ]; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ============================================================
+      # 合规 + 机密 + 一致性检查
+      # ============================================================
+      - name: 1. 检查 README 注明基于 rpi-imager / Apache 2.0 归属
+        run: |
+          grep -q 'Raspberry Pi Imager' README.md || { echo "FAIL: README missing upstream attribution"; exit 1; }
+          grep -qi 'apache' README.md || { echo "FAIL: README missing Apache 2.0 license note"; exit 1; }
+          echo "OK: attribution + license in README"
+
+      - name: 2. 检查改动文件标注 [MODIFIED]（Apache 2.0 要求）
+        run: |
+          # customisation/config generation must carry the MODIFIED marker
+          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/customization_generator.cpp || { echo "FAIL: customization_generator.cpp unmarked"; exit 1; }
+          grep -q 'MODIFIED for radxa-zero-archlinux-builder' src/imagewriter.cpp || { echo "FAIL: imagewriter.cpp unmarked"; exit 1; }
+          echo "OK: modified files marked"
+
+      - name: 3. 检查 config.txt 生成不写明文密码
+        run: |
+          # the generator must emit hashed/derived secrets, never the raw password
+          grep -q 'password_hash=' src/customization_generator.cpp || { echo "FAIL: password_hash missing"; exit 1; }
+          grep -q 'wifi_psk=' src/customization_generator.cpp || { echo "FAIL: wifi_psk missing"; exit 1; }
+          # the raw plaintext password must not be written into config.txt
+          if sed -n '/to_config_txt/,/^}/p' src/customization_generator.cpp | grep -qE 'password\)|wifi_psk\).*passphrase'; then
+            echo "FAIL: possible plaintext secret in config.txt"; exit 1
+          fi
+          echo "OK: config.txt emits hashed/derived secrets"
+
+      - name: 4. 检查 config.txt 走 radxa init_format（非 Pi firstrun）
+        run: |
+          grep -q '"radxa"' src/imagewriter.cpp || { echo "FAIL: radxa init_format missing"; exit 1; }
+          grep -q 'generateRadxaConfigTxt' src/imagewriter.cpp || { echo "FAIL: config.txt generator not wired"; exit 1; }
+          echo "OK: config.txt (radxa) wired into the write path"
+
+      - name: 5. Shell 语法 + 工具链 sanity（无硬编码密钥）
+        run: |
+          if grep -rnEi 'psk\s*=\s*["'"'"'][^$"'"'"'][^"'"'"']{5,}|password\s*=\s*["'"'"'][^$"'"'"'][^"'"'"']*|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY' --include='*.sh' --include='*.cpp' --include='*.h' . | grep -v 'your-wifi\|your-password'; then
+            echo "FAIL: potential hard-coded secret"; exit 1
+          fi
+          echo "OK: no secrets"
+
+  # ============================================================
+  # Windows x64（Qt6 MSVC + windeployqt）
+  # ============================================================
+  win-x64:
+    name: Windows x64
+    needs: [checks]
+    if: needs.checks.outputs.code == 'true'
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 通过 aqtinstall 安装 Qt6
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt windows desktop 6.8.2 win64_msvc2022_64 -O C:/Qt
 
       - name: Configure
-        shell: bash
-        run: |
-          # MinGW ships with the aqt toolchain under IQTA_TOOLS.
-          MINGW_BIN=$(dirname "$(find "$IQTA_TOOLS" -name g++.exe | head -1)")
-          cmake -S src -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
-            -DQt6_ROOT="$QT_ROOT_DIR" \
-            -DCMAKE_C_COMPILER="$MINGW_BIN/gcc.exe" \
-            -DCMAKE_CXX_COMPILER="$MINGW_BIN/g++.exe"
+        run: cmake -B build -S src -G "Visual Studio 17 2022" -DQt6_ROOT=C:/Qt/6.8.2/msvc2022_64
 
       - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Deploy Qt runtime
         shell: bash
         run: |
-          MINGW_BIN=$(dirname "$(find "$IQTA_TOOLS" -name g++.exe | head -1)")
-          export PATH="$MINGW_BIN:$PATH"
-          cmake --build build
+          C:/Qt/6.8.2/msvc2022_64/bin/windeployqt build/Release/radxa-zero-imager.exe --release --no-translations
 
-      - name: Collect the app
+      - name: Package
         shell: bash
         run: |
-          mkdir -p dist
-          # build/deploy already holds radxa-zero-imager.exe + the Qt runtime.
-          cp -r build/deploy/. dist/
-          cd dist && zip -r ../radxa-zero-imager-windows.zip .
+          mkdir -p out
+          cp -r build/Release/. out/
+          cd out && 7z a -tzip ../radxa-zero-imager-win-x64.zip .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
-          name: radxa-zero-imager-windows
-          path: radxa-zero-imager-windows.zip
+          name: radxa-zero-imager-win-x64
+          path: radxa-zero-imager-win-x64.zip
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+  # ============================================================
+  # Linux x64（Qt6 + linuxdeploy → AppImage）
+  # ============================================================
+  linux-x64:
+    name: Linux x64
+    needs: [checks]
+    if: needs.checks.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install deps + Qt6
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
+            libgl1-mesa-dev qt6-base-dev libqt6svg6-dev qt6-base-dev-tools
+
+      - name: Configure + Build
+        run: |
+          cmake -B build -S src -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+
+      - name: Package (AppImage)
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+          cp build/radxa-zero-imager AppDir/usr/bin/
+          cat > AppDir/usr/share/applications/radxa-zero-imager.desktop <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Radxa Zero Imager
+          Exec=radxa-zero-imager
+          Categories=Utility;
+          EOF
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable AppDir/usr/bin/radxa-zero-imager --plugin qt --output appimage
+          mv Radxa_Zero_Imager*.AppImage radxa-zero-imager-linux-x86_64.AppImage 2>/dev/null || mv *.AppImage radxa-zero-imager-linux-x86_64.AppImage
+
+      - uses: actions/upload-artifact@v6
         with:
-          files: radxa-zero-imager-windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: radxa-zero-imager-linux-x64
+          path: radxa-zero-imager-linux-x86_64.AppImage
+
+  # ============================================================
+  # 发布（仅 tag）：上传各平台安装包到 GitHub Release
+  # ============================================================
+  release:
+    name: 发布
+    needs: [checks, win-x64, linux-x64]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v7
+        with:
+          merge-multiple: true
+
+      - name: 生成校验和
+        run: sha256sum radxa-zero-imager-*.zip radxa-zero-imager-*.AppImage > sums.txt 2>/dev/null || true
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: Radxa Zero Imager ${{ github.ref_name }}
+          files: |
+            radxa-zero-imager-*.zip
+            radxa-zero-imager-*.AppImage
+            sums.txt
+          draft: false
+          make_latest: true
+
+  # ============================================================
+  # 质量门：检查 + 各平台构建都通过才算通过
+  # ============================================================
+  ci-passed:
+    name: 质量门
+    needs: [checks, win-x64, linux-x64]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 校验结果
+        run: |
+          FAIL=0
+          for r in ${{ needs.checks.result }} ${{ needs.win-x64.result }} ${{ needs.linux-x64.result }}; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then FAIL=1; fi
+          done
+          if [ "$FAIL" = "1" ]; then echo "存在失败任务"; exit 1; fi
+          echo "全部通过"
