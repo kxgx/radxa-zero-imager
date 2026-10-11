@@ -103,7 +103,7 @@ jobs:
       - name: Configure + Build
         shell: bash
         run: |
-          MINGW_BIN=$(dirname "$(find "$QT_ROOT_DIR/../.." -name g++.exe 2>/dev/null | head -1)")
+          MINGW_BIN=$(dirname "$(find "$IQTA_TOOLS" -name g++.exe 2>/dev/null | head -1)")
           export PATH="$MINGW_BIN:$PATH"
           cmake -B build -S src -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -177,8 +177,11 @@ jobs:
           Type=Application
           Name=Radxa Zero Imager
           Exec=radxa-zero-imager
+          Icon=radxa-zero-imager
           Categories=Utility;
           EOF
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          base64 -d > AppDir/usr/share/icons/hicolor/256x256/apps/radxa-zero-imager.png <<< 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGNgAAAAAgAB4iG8MwAAAABJRU5ErkJggg=='
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable AppDir/usr/bin/radxa-zero-imager --plugin qt --output appimage
           mv Radxa_Zero_Imager*.AppImage radxa-zero-imager-linux-x86_64.AppImage 2>/dev/null || mv *.AppImage radxa-zero-imager-linux-x86_64.AppImage
 
