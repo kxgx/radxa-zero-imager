@@ -666,7 +666,10 @@ void ImageWriter::setSrc(const QUrl &url, quint64 downloadLen, quint64 extrLen, 
     _multipleFilesInZip = multifilesinzip;
     _parentCategory = parentcategory;
     _osName = osname;
-    _initFormat = (initFormat == "none") ? "" : initFormat;
+    // [MODIFIED for radxa-zero-archlinux-builder] Local/custom images carry no
+    // init_format; default to "radxa" so OS Customisation is enabled and the
+    // unified config.txt is written (upstream assumed "none" = no customisation).
+    _initFormat = (initFormat == "none" || initFormat.isEmpty()) ? QByteArrayLiteral("radxa") : initFormat;
     _osReleaseDate = releaseDate;
     _bmapUrl = bmapUrl;
 
@@ -4260,7 +4263,8 @@ void ImageWriter::applyCustomisationFromSettings(const QVariantMap &settings)
     QVariantMap s = settings;
     s.insert(QStringLiteral("osReleaseDate"), _osReleaseDate);
 
-    if (_initFormat == "systemd") {
+    if (_initFormat == "systemd" || _initFormat == "radxa") {
+        // [MODIFIED for radxa-zero-archlinux-builder] "radxa" generates config.txt.
         _applySystemdCustomisationFromSettings(s);
     } else if (_initFormat == "rpi-preseed") {
         _applyRpiPreseedCustomisationFromSettings(s);
