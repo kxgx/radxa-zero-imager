@@ -1,60 +1,63 @@
-# Raspberry Pi Imager
+# Radxa Zero Imager
 
-![](./screenshot.png)
+A modified **Raspberry Pi Imager** for writing [radxa-zero-archlinux-builder](https://github.com/kxgx/radxa-zero-archlinux-builder) images to SD cards, with a single encrypted `config.txt` for headless first-boot setup.
 
-Raspberry Pi Imaging Utility
+> **Based on / 基于**: [Raspberry Pi Imager (`rpi-imager`)](https://github.com/raspberrypi/rpi-imager) by **Raspberry Pi Ltd**, licensed under **Apache 2.0**.  This is a fork that keeps the upstream history for attribution.
+>
+> **Adapted for / 针对**: the **Radxa Zero** (Amlogic S905Y2) running **Arch Linux ARM** images built by `radxa-zero-archlinux-builder` — not for Raspberry Pi boards.
 
-- To install on Raspberry Pi OS, use `sudo apt update && sudo apt install rpi-imager`.
-- Download the latest version for Windows, macOS and Ubuntu from the [Raspberry Pi downloads page](https://www.raspberrypi.com/software/).
+## What's changed from upstream (魔改点)
 
-## How to install and use Raspberry Pi Imager
+| Area | Upstream (Raspberry Pi Imager) | This fork (Radxa Zero Imager) |
+|---|---|---|
+| **Target** | Raspberry Pi boards + the Pi OS catalog | **Radxa Zero only** (our builder's images) |
+| **First-boot config** | Pi `firstrun.sh` / cloud-init / rpi-preseed | a single **`config.txt`** (hostname / timezone / ssh / wifi / user) |
+| **Secrets** | written into the script | **hashed**: account password → `crypt(3)`, WiFi → PBKDF2-derived hex PSK (**no plaintext on the card**) |
+| **OS list** | online Raspberry Pi OS manifest | **Radxa Zero manifest** (hosted + **embedded offline fallback** + local images) |
+| **Name** | Raspberry Pi Imager | **Radxa Zero Imager** (`radxa-zero-imager.exe`) |
 
-Please see our [official documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#raspberry-pi-imager).
+All modified files carry a `[MODIFIED for radxa-zero-archlinux-builder]` marker (an Apache 2.0 requirement).
 
-## Development
+## How it works
 
-To build Raspberry Pi Imager from source-code, see our separate instructions in [CONTRIBUTING.md](./CONTRIBUTING.md)
+1. Pick a **Radxa Zero Arch Linux** image (hosted manifest / embedded / a local `.img` you built).
+2. Pick the SD card.
+3. Open **OS Customisation** and set hostname, username/password, WiFi, SSH, timezone.
+4. Write.  The imager drops a `config.txt` on the SD card's boot partition (secrets **hashed/derived**).
+5. Boot the Radxa Zero — the image's `boot-config-apply` first-boot hook reads `config.txt`, applies everything, then deletes it.
 
-For the Linux release pipeline — the rootless, multi-architecture chroot build that produces the AppImages and `.deb` packages — see [doc/linux-build.md](./doc/linux-build.md).
+### config.txt format
 
-## Other notes
+```ini
+hostname=radxa-zero
+timezone=Asia/Shanghai
+ssh=1
+wifi_ssid=MyNetwork
+wifi_country=CN
+wifi_psk=<PBKDF2-derived 64-hex PSK>
+username=xg
+password_hash=$y$...   # crypt(3) hash, not the plaintext password
+```
 
-### Custom repository
+## Building
 
-If the application is started with "--repo [your own URL]" it will use a custom image repository.
-So can simply create another 'start menu shortcut' to the application with that parameter to use the application with your own images.
+See [BUILDING.md](./BUILDING.md).  On Windows it needs Qt 6.9+ (MinGW), CMake and Ninja:
 
-### Anonymous metrics (telemetry)
+```sh
+cmake -S src -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.y/mingw_64 \
+  -DCMAKE_C_COMPILER=/path/to/mingw/bin/gcc.exe \
+  -DCMAKE_CXX_COMPILER=/path/to/mingw/bin/g++.exe
+cmake --build build
+# → build/deploy/radxa-zero-imager.exe
+```
 
-#### Why and what
+## Related
 
-In order to understand usage of the application (e.g. uptake of Raspberry Pi Imager versions and which images and operating systems are most popular), Raspberry Pi Imager collects anonymous metrics (telemetry) by default. These metrics are used to prioritise and justify work on the Raspberry Pi Imager, and contain the following information:
+- **Image builder**: [radxa-zero-archlinux-builder](https://github.com/kxgx/radxa-zero-archlinux-builder) — builds the Arch Linux ARM images this imager writes.
 
-- The URL of the OS you have selected
-- The category of the OS you have selected
-- The observed name of the OS you have selected
-- The version of Raspberry Pi Imager
-- A flag to say if Raspberry Pi Imager is being used on the Desktop or as part of the Network Installer
-- The host operating system version (e.g. Windows 11)
-- The host operating system architecture (e.g. arm64, x86_64)
-- The host operating system locale name (e.g. en-GB)
+## License
 
-If the Raspberry Pi Imager is being run a part of the Network Installer, Imager will also collect the revision of Raspberry Pi it is running on.
-
-#### Where is it stored
-
-This web service is hosted by [Heroku](https://www.heroku.com) and only stores an incrementing counter using a [Redis Sorted Set](https://redis.io/topics/data-types#sorted-sets) for each URL, operating system name and category per day in the `eu-west-1` region and does not associate any personal data with those counts. This allows us to query the number of downloads over time and nothing else.
-
-The last 1,500 requests to the service are logged for one week before expiring as this is the [minimum log retention period for Heroku](https://devcenter.heroku.com/articles/logging#log-history-limits).
-
-#### Viewing the data
-
-As the data is stored in aggregate form, only aggregate data is available to any viewer. See what we see at: [rpi-imager-stats](https://rpi-imager-stats.raspberrypi.com)
-
-#### Opting out
-
-The most convenient way to opt-out of anonymous metric collection is via the Raspberry Pi Imager UI:
-
-- Select "App Options"
-- Untoggle "Enable anonymous statistics (telemetry) collection"
-- Press "Save"
+**Apache 2.0** — same as upstream [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager).
+Copyright (C) 2020 Raspberry Pi Ltd (upstream) and contributors to this fork.
+See [license.txt](./license.txt) for the full terms and third-party component licenses.
