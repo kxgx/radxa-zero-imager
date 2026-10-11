@@ -126,10 +126,12 @@ WizardStepBase {
 
                 WizardFormLabel {
                     id: labelCapitalCity
+                    visible: false  // [MODIFIED] hidden: set the timezone directly instead of via a capital city
                     text: qsTr("Capital city:")
                     accessibleDescription: qsTr("Choose your nearest capital city. This will automatically recommend the correct time zone and keyboard layout for your region, and set the wireless regulatory domain for your country's Wi-Fi regulations.")
                 }
                 RowLayout {
+                    visible: false  // [MODIFIED] hidden: capital-city picker is redundant; timezone is set directly
                     Layout.fillWidth: true
                     spacing: Style.spacingMedium
 
@@ -185,7 +187,7 @@ WizardStepBase {
                 WizardFormLabel {
                     id: labelTimezone
                     text: qsTr("Time zone:")
-                    accessibleDescription: qsTr("Choose your time zone so your Radxa Zero displays the correct local time. This is automatically recommended based on your capital city selection, but you can change it if the suggestion is incorrect.")
+                    accessibleDescription: qsTr("Choose your time zone so your Radxa Zero displays the correct local time.")
                 }
                 ImComboBox {
                     id: comboTimezone
