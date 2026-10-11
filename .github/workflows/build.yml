@@ -144,19 +144,28 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install deps + Qt6
+      - name: Install deps (system libs)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
-            libgl1-mesa-dev qt6-base-dev libqt6svg6-dev qt6-base-dev-tools libgnutls28-dev libudev-dev
+            libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev
+
+      - name: Install Qt 6.9 (aqtinstall)
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt linux desktop 6.9.2 linux_gcc_64 -O /opt/Qt
 
       - name: Configure + Build
         run: |
-          cmake -B build -S src -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -S src -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/opt/Qt/6.9.2/gcc_64
           cmake --build build --parallel
 
       - name: Package (AppImage)
         run: |
+          export PATH="/opt/Qt/6.9.2/gcc_64/bin:$PATH"
+          export QMAKE=/opt/Qt/6.9.2/gcc_64/bin/qmake
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
