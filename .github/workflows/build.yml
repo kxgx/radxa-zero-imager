@@ -148,7 +148,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ninja-build cmake g++ \
-            libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev
+            libgl1-mesa-dev libgnutls28-dev libudev-dev liburing-dev libxkbcommon-x11-0 libxkbcommon-dev libxcb-xinerama0
 
       - name: Install Qt 6.9 (aqtinstall)
         run: |
