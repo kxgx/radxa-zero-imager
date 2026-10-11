@@ -28,23 +28,23 @@ Item {
 
     // === COLORS ===
     readonly property color mainBackgroundColor: "#ffffff"
-    readonly property color raspberryRed: "#ab1e3a"
+    readonly property color radxaGreen: "#2e9e44"
     readonly property color transparent: "transparent"
 
     readonly property color buttonBackgroundColor: mainBackgroundColor
-    readonly property color buttonForegroundColor: raspberryRed
+    readonly property color buttonForegroundColor: radxaGreen
     readonly property color buttonFocusedBackgroundColor: "#d1dcfb"
     readonly property color buttonHoveredBackgroundColor: "#f2f2f2"
 
-    readonly property color button2BackgroundColor: raspberryRed
+    readonly property color button2BackgroundColor: radxaGreen
     readonly property color button2ForegroundColor: mainBackgroundColor
     // Focused: noticeably darker for strong state indication (keyboard focus)
-    readonly property color button2FocusedBackgroundColor: "#8f122c"
+    readonly property color button2FocusedBackgroundColor: "#217a35"
     // Hovered: noticeably lighter to differentiate from base (≥4.5:1 contrast vs base)
-    readonly property color button2HoveredBackgroundColor: "#eac7ce"
+    readonly property color button2HoveredBackgroundColor: "#cfe9d6"
     // Hovered foreground should be Raspberry Red for ≥4.5:1 contrast on the light hover bg
-    readonly property color button2HoveredForegroundColor: raspberryRed
-    readonly property color raspberryRedHighlight: "#d64561"
+    readonly property color button2HoveredForegroundColor: radxaGreen
+    readonly property color radxaGreenHighlight: "#5cb870"
 
     readonly property color titleBackgroundColor: "#f5f5f5"
     readonly property color titleSeparatorColor: "#afafaf"
@@ -62,14 +62,14 @@ Item {
     // descriptions in list views
     readonly property color textDescriptionColor: "#1a1a1a"
     // Sidebar colors
-    readonly property color sidebarActiveBackgroundColor: raspberryRed
+    readonly property color sidebarActiveBackgroundColor: radxaGreen
     readonly property color sidebarTextOnActiveColor: "#FFFFFF"
-    readonly property color sidebarTextOnInactiveColor: raspberryRed
+    readonly property color sidebarTextOnInactiveColor: radxaGreen
     readonly property color sidebarTextDisabledColor: "#E0E0E0"
     // Sidebar controls
     readonly property color sidebarControlBorderColor: "#767676"
     readonly property color sidebarBackgroundColour: mainBackgroundColor
-    readonly property color sidebarBorderColour: raspberryRed
+    readonly property color sidebarBorderColour: radxaGreen
 
     // OS metadata
     readonly property color textMetadataColor: "#646464"
@@ -79,9 +79,9 @@ Item {
 
     readonly property color progressBarTextColor: "white"
     readonly property color progressBarVerifyForegroundColor: "#6cc04a"
-    readonly property color progressBarBackgroundColor: raspberryRed
+    readonly property color progressBarBackgroundColor: radxaGreen
     // New: distinct colors for writing vs verification phases
-    readonly property color progressBarWritingForegroundColor: raspberryRed
+    readonly property color progressBarWritingForegroundColor: radxaGreen
     readonly property color progressBarTrackColor: titleBackgroundColor
 
     readonly property color lanbarBackgroundColor: "#ffffe3"

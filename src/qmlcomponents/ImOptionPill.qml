@@ -103,7 +103,7 @@ Item {
                 text: pill.helpLabel
                 font.family: Style.fontFamily
                 font.pointSize: Style.fontSizeDescription
-                color: helpText.activeFocus ? Style.raspberryRed : Style.buttonForegroundColor
+                color: helpText.activeFocus ? Style.radxaGreen : Style.buttonForegroundColor
                 font.underline: helpHover.hovered || helpText.activeFocus
                 
                 // Keyboard accessibility
@@ -141,7 +141,7 @@ Item {
         Switch {
             id: sw
             Layout.alignment: Qt.AlignVCenter
-            Material.accent: sw.activeFocus ? Style.raspberryRed : Style.formControlActiveColor
+            Material.accent: sw.activeFocus ? Style.radxaGreen : Style.formControlActiveColor
             checked: pill.checked
             activeFocusOnTab: true
             focusPolicy: Qt.TabFocus

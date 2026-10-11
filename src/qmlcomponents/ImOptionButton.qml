@@ -98,7 +98,7 @@ Item {
                 text: control.helpLabel
                 font.family: Style.fontFamily
                 font.pointSize: Style.fontSizeDescription
-                color: helpText.activeFocus ? Style.raspberryRed : Style.buttonForegroundColor
+                color: helpText.activeFocus ? Style.radxaGreen : Style.buttonForegroundColor
                 font.underline: helpHover.hovered || helpText.activeFocus
                 
                 // Keyboard accessibility

@@ -180,7 +180,7 @@ WizardStepBase {
                                 // Carries what the confirmation dialog says, so
                                 // that skipping the dialog relocates the warning
                                 // rather than dropping it.
-                                accessibleDescription: qsTr("Enable USB device mode to use your Raspberry Pi as a USB peripheral for networking and storage. This can change how your device behaves and may affect connectivity and host interaction; only enable it if you are sure you know what you are doing.")
+                                accessibleDescription: qsTr("Enable USB device mode to use your Radxa Zero as a USB peripheral for networking and storage. This can change how your device behaves and may affect connectivity and host interaction; only enable it if you are sure you know what you are doing.")
                                 helpLabel: ImageWriterSingleton.isEmbeddedMode() ? "" : qsTr("Learn more about USB Gadget Mode")
                                 helpUrl: ImageWriterSingleton.isEmbeddedMode() ? "" : "https://github.com/raspberrypi/rpi-usb-gadget?tab=readme-ov-file"
                                 checked: false

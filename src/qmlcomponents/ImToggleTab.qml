@@ -45,7 +45,7 @@ Button {
         font: control.font
         color: control.enabled
               ? (control.active
-                   ? ((control.activeFocus || control.hovered) ? Style.raspberryRed : Style.button2ForegroundColor)
+                   ? ((control.activeFocus || control.hovered) ? Style.radxaGreen : Style.button2ForegroundColor)
                    : Style.buttonForegroundColor)
               : Qt.rgba(0, 0, 0, 0.3)
         horizontalAlignment: Text.AlignHCenter

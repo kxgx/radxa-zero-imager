@@ -17,7 +17,7 @@ WizardStepBase {
 
     title: qsTr("Customisation: Raspberry Pi Connect")
     subtitle: orgModeEnabled
-             ? qsTr("Register this device with your Raspberry Pi Connect organisation")
+             ? qsTr("Register this device with your Radxa Zero Connect organisation")
              : qsTr("Sign in to receive a token and enable Raspberry Pi Connect")
     showSkipButton: true
     // This page is one switch and what follows from it, so the switch comes
@@ -80,7 +80,7 @@ WizardStepBase {
                 WizardFormLabel {
                     id: labelOrgKey
                     text: qsTr("Organisation API Key:")
-                    accessibleDescription: qsTr("Enter or paste your Raspberry Pi Connect organisation API key")
+                    accessibleDescription: qsTr("Enter or paste your Radxa Zero Connect organisation API key")
                 }
 
                 ImPasswordField {
@@ -149,7 +149,7 @@ WizardStepBase {
                 Layout.fillWidth: true
                 visible: !root.orgModeEnabled
                 text: qsTr("Enable Raspberry Pi Connect")
-                accessibleDescription: qsTr("Enable secure remote access to your Raspberry Pi through the Raspberry Pi Connect cloud service")
+                accessibleDescription: qsTr("Enable secure remote access to your Radxa Zero through the Raspberry Pi Connect cloud service")
                 helpLabel: ImageWriterSingleton.isEmbeddedMode() ? "" : qsTr("What is Raspberry Pi Connect?")
                 helpUrl: ImageWriterSingleton.isEmbeddedMode() ? "" : "https://www.raspberrypi.com/software/connect/"
                 checked: false
