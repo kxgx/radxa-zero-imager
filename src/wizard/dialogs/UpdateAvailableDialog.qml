@@ -85,7 +85,7 @@ BaseDialog {
             id: noButton
             objectName: "updateNoButton"
             text: CommonStrings.no
-            accessibleDescription: qsTr("Continue using the current version of Raspberry Pi Imager")
+            accessibleDescription: qsTr("Continue using the current version of Radxa Zero Imager")
             activeFocusOnTab: true
             onClicked: {
                 root.reject()

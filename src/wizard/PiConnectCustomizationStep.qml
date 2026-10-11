@@ -400,7 +400,7 @@ WizardStepBase {
             switch (root.deviceFailure) {
             case "expired":      return qsTr("The code has expired.")
             case "badcode":      return qsTr("Raspberry Pi Connect no longer recognises that code.")
-            case "unauthorized": return qsTr("Raspberry Pi Connect did not accept the request from Raspberry Pi Imager.")
+            case "unauthorized": return qsTr("Raspberry Pi Connect did not accept the request from Radxa Zero Imager.")
             case "network":      return qsTr("Could not reach Raspberry Pi Connect. Check the network connection.")
             default:             return qsTr("Raspberry Pi Connect sent a reply that could not be read.")
             }
@@ -649,7 +649,7 @@ WizardStepBase {
                 // stores the secret in ImageWriter directly — keeps the
                 // raw secret off the QML stack and lets the wizard
                 // discard it cleanly if the user changes target later.
-                var authDesc = desc.length > 0 ? desc : qsTr("Raspberry Pi Imager")
+                var authDesc = desc.length > 0 ? desc : qsTr("Radxa Zero Imager")
                 var authResult = ImageWriterSingleton.requestOrgAuthKey(authDesc, 1)
                 if (!authResult || authResult.ok !== true) {
                     authKeyErrorDialog.detail =
@@ -821,7 +821,7 @@ WizardStepBase {
         }
 
         Text {
-            text: qsTr("Raspberry Pi Imager could not create an organisation auth key. Check that your organisation API key is valid and that this computer is online, then try again.")
+            text: qsTr("Radxa Zero Imager could not create an organisation auth key. Check that your organisation API key is valid and that this computer is online, then try again.")
             font.pointSize: Style.fontSizeFormLabel
             font.family: Style.fontFamily
             color: Style.formLabelColor

@@ -395,9 +395,9 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-    app.setOrganizationName("Raspberry Pi");
-    app.setOrganizationDomain("raspberrypi.com");
-    app.setApplicationName("Raspberry Pi Imager");
+    app.setOrganizationName("Radxa");
+    app.setOrganizationDomain("radxa.com");
+    app.setApplicationName("Radxa Zero Imager");
     app.setApplicationVersion(ImageWriter::staticVersion());
     {
         const auto source = PlatformQuirks::windowIconSource();

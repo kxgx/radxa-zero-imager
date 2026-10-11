@@ -278,7 +278,7 @@ BaseDialog {
                 id: chkTelemetry
                 objectName: "telemetryToggle"
                 text: qsTr("Enable anonymous statistics (telemetry)")
-                accessibleDescription: qsTr("Send anonymous usage statistics to help improve Raspberry Pi Imager")
+                accessibleDescription: qsTr("Send anonymous usage statistics to help improve Radxa Zero Imager")
                 helpLabel: ImageWriterSingleton.isEmbeddedMode() ? "" : qsTr("What is this?")
                 helpUrl: ImageWriterSingleton.isEmbeddedMode() ? "" : "https://github.com/raspberrypi/rpi-imager?tab=readme-ov-file#anonymous-metrics-telemetry"
                 Layout.fillWidth: true
@@ -337,7 +337,7 @@ BaseDialog {
                 id: saveButton
                 objectName: "optionsSaveButton"
                 text: qsTr("Save")
-                accessibleDescription: qsTr("Save the selected options and apply them to Raspberry Pi Imager")
+                accessibleDescription: qsTr("Save the selected options and apply them to Radxa Zero Imager")
                 Layout.minimumWidth: Style.buttonWidthMinimum
                 activeFocusOnTab: true
                 onClicked: {
@@ -508,7 +508,7 @@ BaseDialog {
             font.family: Style.fontFamily
             color: Style.textDescriptionColor
             Layout.fillWidth: true
-            text: qsTr("If you disable warnings, Raspberry Pi Imager will <b>not show confirmation prompts before writing images</b>. You will still be required to <b>type the exact name</b> when selecting a system drive.")
+            text: qsTr("If you disable warnings, Radxa Zero Imager will <b>not show confirmation prompts before writing images</b>. You will still be required to <b>type the exact name</b> when selecting a system drive.")
             Accessible.name: text.replace(/<[^>]+>/g, '')  // Strip HTML tags for accessibility
         }
 
