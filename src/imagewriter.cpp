@@ -2585,7 +2585,7 @@ void ImageWriter::onOsListFetchComplete(const QByteArray &data, const QUrl &url,
 void ImageWriter::loadEmbeddedOsList()
 {
     static const QByteArray kEmbedded = QByteArrayLiteral(R"JSON({
-  "imager": { "name": "Radxa Zero Imager", "devices": [ { "name": "Radxa Zero", "tags": ["radxa-zero"], "description": "Radxa Zero (Amlogic S905Y2)", "default": true } ] },
+  "imager": { "name": "Radxa Zero Imager", "devices": [ { "name": "Radxa Zero", "description": "Radxa Zero (Amlogic S905Y2)", "default": true } ] },
   "os_list": [
     {
       "name": "Radxa Zero Arch Linux",

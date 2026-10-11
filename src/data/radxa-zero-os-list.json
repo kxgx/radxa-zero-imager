@@ -4,7 +4,6 @@
     "devices": [
       {
         "name": "Radxa Zero",
-        "tags": ["radxa-zero"],
         "description": "Radxa Zero (Amlogic S905Y2)",
         "default": true
       }
