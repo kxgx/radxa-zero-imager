@@ -56,7 +56,7 @@ if(APPLE)
     endif()
 endif()
 
-project(rpi-imager LANGUAGES CXX C)
+project(radxa-zero-imager LANGUAGES CXX C)
 
 find_package(Git QUIET)
 
@@ -526,7 +526,7 @@ add_dependencies(${PROJECT_NAME} generate_version)
 
 # Set output name based on build type
 if(BUILD_CLI_ONLY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "rpi-imager-cli")
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "radxa-zero-imager-cli")
 endif()
 
 # Create an rpi-imager_lupdate target
